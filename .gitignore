@@ -1,7 +1,47 @@
+# ─── Secrets / environment ────────────────────────────────────────────────────
 .env
 .env.dev
 .env.test
-__pycache__
-db.sqlite3
-db.sqlite3-shm
-db.sqlite3-wal
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+.pytest_cache
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# ─── Replit runtime ───────────────────────────────────────────────────────────
+.pythonlibs/
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/*.log
+logs/*.gz
+
+# ─── Test / lint cache ────────────────────────────────────────────────────────
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+# (docker-compose.yml and Dockerfiles are committed)
+
+# ─── IDEs ─────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.sublime-workspace
+
+# ─── System ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

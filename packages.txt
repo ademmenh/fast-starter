@@ -1,4 +1,0 @@
-python-dotenv
-fastapi
-uvicorn
-tortoise-orm

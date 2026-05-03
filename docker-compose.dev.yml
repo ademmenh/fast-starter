@@ -1,0 +1,66 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME}
+      POSTGRES_USER:     ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${DB_USER} -d $${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    env_file:
+      - .env.dev
+    environment:
+      PORT:           ${PORT:-8000}
+      WORKERS_NUMBER: ${WORKERS_NUMBER:-1}
+      DB_HOST:        ${DB_HOST}
+    volumes:
+      - ./src:/app/src:ro
+      - logs_dev:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT','8000') + '/api/v' + os.environ.get('API_VERSION','1') + '/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+
+  nginx:
+    build:
+      context: ./nginx
+    image: nginx:alpine
+    restart: unless-stopped
+    environment:
+      NGINX_PORT: ${NGINX_PORT:-80}
+      API_HOST:   app
+      API_PORT:   ${PORT:-8000}
+    volumes:
+      - ./nginx/templates/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - "${NGINX_PORT:-80}:${NGINX_PORT:-80}"
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  pgdata_dev:
+  logs_dev:

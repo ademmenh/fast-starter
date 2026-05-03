@@ -1,0 +1,119 @@
+from fastapi import Depends, HTTPException, Query
+from src.shared.presentation.auth import AccessTokenGuard, AuthUser, RoleGuard
+from src.shared.presentation.responses import PaginatedResponse, PaginationMeta, Response
+from src.users.application.delete_user import DeleteUser, DeleteUserInput
+from src.users.application.get_user import GetUser, GetUserInput
+from src.users.application.list_users import ListUsers, ListUsersInput
+from src.users.application.update_user import UpdateUser, UpdateUserInput
+from src.users.domain.errors import UserEmailAlreadyExistsError, UserNotFoundError
+from src.users.presentation.dtos import UpdateUserDto
+from src.users.presentation.exception_handler import UsersExceptionHandler
+from src.users.presentation.rdtos import UserRDTO
+from typing import Annotated
+
+class UsersController:
+    def __init__(
+        self,
+        router,
+        exception_handler: UsersExceptionHandler,
+        list_users_use_case: ListUsers,
+        get_user_use_case: GetUser,
+        update_user_use_case: UpdateUser,
+        delete_user_use_case: DeleteUser,
+    ) -> None:
+        self.router = router
+        self.exception_handler = exception_handler
+        self.list_users_use_case = list_users_use_case
+        self.get_user_use_case = get_user_use_case
+        self.update_user_use_case = update_user_use_case
+        self.delete_user_use_case = delete_user_use_case
+        self._register_routes()
+
+    def _register_routes(self) -> None:
+        self.router.get("/users", response_model=PaginatedResponse[UserRDTO])(self.list_users)
+        self.router.get("/users/{user_id}", response_model=Response[UserRDTO])(self.get_user)
+        self.router.put("/users/{user_id}", response_model=Response[UserRDTO])(self.update_user)
+        self.router.delete("/users/{user_id}", status_code=204)(self.delete_user)
+
+    async def list_users(
+        self,
+        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
+        role: Annotated[str, Depends(RoleGuard(["admin"]))],
+        page: Annotated[int, Query(ge=1, description="Page number")] = 1,
+        limit: Annotated[int, Query(ge=1, le=32, description="Items per page")] = 20,
+        search: str | None = None,
+    ) -> PaginatedResponse[UserRDTO]:
+        try:
+            users, total = await self.list_users_use_case.execute(
+                ListUsersInput(role=role, search=search, page=page, limit=limit)
+            )
+            return PaginatedResponse(
+                message="Users retrieved successfully",
+                status_code=200,
+                data=[UserRDTO.from_entity(u) for u in users],
+                pagination=PaginationMeta(total=total, page=page, limit=limit),
+            )
+        except Exception:
+            raise
+
+    async def get_user(
+        self,
+        user_id: str,
+        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
+    ) -> Response[UserRDTO]:
+        is_admin = current_user.role == "admin"
+        is_self = current_user.id == user_id
+        if not is_admin and not is_self:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        try:
+            user = await self.get_user_use_case.execute(GetUserInput(user_id=user_id))
+            return Response(
+                message="User retrieved successfully",
+                status_code=200,
+                data=UserRDTO.from_entity(user),
+            )
+        except UserNotFoundError as exc:
+            self.exception_handler(exc)
+
+    async def update_user(
+        self,
+        user_id: str,
+        dto: UpdateUserDto,
+        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
+        role: Annotated[str, Depends(RoleGuard(["admin"]))],
+    ) -> Response[UserRDTO]:
+        is_admin = current_user.role == "admin"
+        is_self = current_user.id == user_id
+        if not is_admin and not is_self:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        if not is_admin and dto.role is not None:
+            raise HTTPException(status_code=403, detail="Only admins can change roles")
+        try:
+            user = await self.update_user_use_case.execute(
+                UpdateUserInput(
+                    user_id=user_id,
+                    name=dto.name,
+                    email=dto.email,
+                    phone=dto.phone,
+                    password=dto.password,
+                    role=dto.role,
+                )
+            )
+            return Response(
+                message="User updated successfully",
+                status_code=200,
+                data=UserRDTO.from_entity(user),
+            )
+        except (UserNotFoundError, UserEmailAlreadyExistsError) as exc:
+            self.exception_handler(exc)
+
+    async def delete_user(
+        self,
+        user_id: str,
+        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
+        role: Annotated[str, Depends(RoleGuard(["admin"]))],
+    ) -> None:
+        try:
+            await self.delete_user_use_case.execute(DeleteUserInput(user_id=user_id))
+        except UserNotFoundError as exc:
+            self.exception_handler(exc)
