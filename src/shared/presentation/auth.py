@@ -38,7 +38,7 @@ class AccessTokenGuard:
 
         payload = jwt_adapter.verify(raw)
         if payload is None:
-            raise HTTPException(status_code=401, detail="Missing authentication token")
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
 
         return AuthUser(id=payload.sub, email=payload.email, role=payload.role)
 
@@ -57,7 +57,7 @@ class RefreshTokenGuard:
 
         payload = jwt_adapter.verify_refresh(raw)
         if payload is None:
-            raise HTTPException(status_code=401, detail="Missing authentication token")
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
 
         return raw
 

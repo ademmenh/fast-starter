@@ -76,3 +76,31 @@ class UserRepository(IUserRepository):
     async def delete(self, user_id: str) -> None:
         async with self._engine.begin() as conn:
             await conn.execute(delete(users_table).where(users_table.c.id == user_id))
+
+class InMemoryUserRepository(IUserRepository):
+    def __init__(self):
+        self.users = {}
+
+    async def find_by_id(self, user_id: str) -> UserEntity | None:
+        return self.users.get(user_id)
+
+    async def find_by_email(self, email: str) -> UserEntity | None:
+        for u in self.users.values():
+            if u.email.value == email:
+                return u
+        return None
+
+    async def list(self, filter=None, page=1, limit=20):
+        return list(self.users.values()), len(self.users)
+
+    async def create(self, entity: UserEntity) -> UserEntity:
+        self.users[entity.id.value] = entity
+        return entity
+
+    async def update(self, entity: UserEntity) -> UserEntity:
+        self.users[entity.id.value] = entity
+        return entity
+
+    async def delete(self, user_id: str) -> None:
+        if user_id in self.users:
+            del self.users[user_id]

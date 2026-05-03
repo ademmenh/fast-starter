@@ -1,5 +1,8 @@
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncEngine
+from src.users.infrastructure.schema import users_table
 
 
 @pytest.mark.asyncio
@@ -37,21 +40,37 @@ async def test_get_profile_requires_auth(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_authenticated_user_can_read_own_profile(client: AsyncClient):
+async def test_authenticated_user_can_read_own_profile(client: AsyncClient, db_engine: AsyncEngine):
+    email = "frank@example.com"
+    password = "frank123"
     await client.post(
         "/api/v1/auth/register",
-        json={"name": "Frank", "email": "frank@example.com", "password": "frank123"},
+        json={"name": "Frank", "email": email, "password": password},
     )
+    
+    # Login as client (to get ID)
+    login_init = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": password},
+    )
+    user_id = login_init.json()["data"]["id"]
+    
+    # Elevate to admin
+    async with db_engine.begin() as conn:
+        await conn.execute(
+            update(users_table).where(users_table.c.id == user_id).values(role="admin")
+        )
+    
+    # Login again to get admin token
     login = await client.post(
         "/api/v1/auth/login",
-        json={"email": "frank@example.com", "password": "frank123"},
+        json={"email": email, "password": password},
     )
     token = login.json()["tokens"]["accessToken"]
-    user_id = login.json()["data"]["id"]
 
     response = await client.get(
         f"/api/v1/users/{user_id}",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
-    assert response.json()["data"]["email"] == "frank@example.com"
+    assert response.json()["data"]["email"] == email

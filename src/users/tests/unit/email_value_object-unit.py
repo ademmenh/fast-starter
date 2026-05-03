@@ -1,7 +1,6 @@
 import pytest
 from src.shared.domain.email import Email
 
-
 def test_valid_email_is_normalised():
     email = Email.create("  User@Example.COM  ")
     assert email.value == "user@example.com"

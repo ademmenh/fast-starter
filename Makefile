@@ -81,13 +81,13 @@ test:
 	$(PYTEST) src/ -v
 
 test\:unit:
-	$(PYTEST) $$(find src -type d -name unit) -v
+	$(PYTEST) src/ -v -k unit
 
 test\:integration:
-	$(PYTEST) $$(find src -type d -name integration) -v
+	$(PYTEST) src/ -v -k integration
 
 test\:e2e:
-	$(PYTEST) $$(find src -type d -name e2e) -v
+	$(PYTEST) src/ -v -k e2e
 
 # ── Code quality ───────────────────────────────────────────────────────────────
 lint:

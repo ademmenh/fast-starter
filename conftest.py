@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 import os
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine
 from src.shared.infrastructure.metadata import metadata
 from src.users.infrastructure.schema import users_table  # Ensure tables are registered
 from src.app import create_app
@@ -27,12 +27,6 @@ test_engine = create_async_engine(
     connect_args={"check_same_thread": False},
 )
 
-TestSessionFactory = async_sessionmaker(
-    test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
-
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def create_test_tables():
@@ -50,10 +44,9 @@ async def create_test_tables():
 
 
 @pytest_asyncio.fixture
-async def db_session():
-    """Standalone session for direct DB operations inside tests."""
-    async with TestSessionFactory() as session:
-        yield session
+async def db_engine():
+    """Standalone engine for direct DB operations inside tests."""
+    yield test_engine
 
 
 @pytest_asyncio.fixture

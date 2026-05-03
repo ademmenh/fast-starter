@@ -1,3 +1,4 @@
+from src.users.domain.entity import UserRole
 from fastapi import Depends, HTTPException, Query
 from src.shared.presentation.auth import AccessTokenGuard, AuthUser, RoleGuard
 from src.shared.presentation.responses import PaginatedResponse, PaginationMeta, Response
@@ -37,11 +38,11 @@ class UsersController:
 
     async def list_users(
         self,
-        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
-        role: Annotated[str, Depends(RoleGuard(["admin"]))],
+        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
         page: Annotated[int, Query(ge=1, description="Page number")] = 1,
         limit: Annotated[int, Query(ge=1, le=32, description="Items per page")] = 20,
-        search: str | None = None,
+        role: UserRole | None = Query(None, description="Filter by role"),
+        search: str | None = Query(None, description="Search by name or email"),
     ) -> PaginatedResponse[UserRDTO]:
         try:
             users, total = await self.list_users_use_case.execute(
@@ -59,12 +60,8 @@ class UsersController:
     async def get_user(
         self,
         user_id: str,
-        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
+        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
     ) -> Response[UserRDTO]:
-        is_admin = current_user.role == "admin"
-        is_self = current_user.id == user_id
-        if not is_admin and not is_self:
-            raise HTTPException(status_code=403, detail="Insufficient permissions")
         try:
             user = await self.get_user_use_case.execute(GetUserInput(user_id=user_id))
             return Response(
@@ -79,15 +76,8 @@ class UsersController:
         self,
         user_id: str,
         dto: UpdateUserDto,
-        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
-        role: Annotated[str, Depends(RoleGuard(["admin"]))],
+        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
     ) -> Response[UserRDTO]:
-        is_admin = current_user.role == "admin"
-        is_self = current_user.id == user_id
-        if not is_admin and not is_self:
-            raise HTTPException(status_code=403, detail="Insufficient permissions")
-        if not is_admin and dto.role is not None:
-            raise HTTPException(status_code=403, detail="Only admins can change roles")
         try:
             user = await self.update_user_use_case.execute(
                 UpdateUserInput(
@@ -110,8 +100,7 @@ class UsersController:
     async def delete_user(
         self,
         user_id: str,
-        current_user: Annotated[AuthUser, Depends(AccessTokenGuard())],
-        role: Annotated[str, Depends(RoleGuard(["admin"]))],
+        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
     ) -> None:
         try:
             await self.delete_user_use_case.execute(DeleteUserInput(user_id=user_id))
