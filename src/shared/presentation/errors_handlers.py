@@ -1,3 +1,4 @@
+from jose import JWTError
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from http import HTTPStatus
@@ -13,6 +14,16 @@ async def http_exception_handler(_request: Request, exc: StarletteHTTPException)
             "error": HTTPStatus(exc.status_code).name,
             "statusCode": exc.status_code,
             "message": getattr(exc, "detail", None),
+        },
+    )
+
+async def jwt_error_handler(_request: Request, exc: JWTError) -> JSONResponse:
+    return JSONResponse(
+        status_code=401,
+        content={
+            "error": HTTPStatus(401).name,
+            "statusCode": 401,
+            "message": None,
         },
     )
 

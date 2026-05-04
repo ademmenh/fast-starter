@@ -8,6 +8,7 @@ from typing import Literal
 UserRole = Literal["admin", "client"]
 
 
+
 @dataclass(frozen=True)
 class UserEntity:
     id: Id

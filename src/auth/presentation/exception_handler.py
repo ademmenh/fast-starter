@@ -13,7 +13,7 @@ class AuthExceptionHandler:
             case InvalidRefreshTokenError():
                 raise HTTPException(
                     status_code=401,
-                    detail="Invalid Refresh Token",
+                    detail=None
                 )
             case UserEmailAlreadyExistsError():
                 raise HTTPException(

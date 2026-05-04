@@ -21,15 +21,10 @@ class RefreshToken:
 
     async def execute(self, input: RefreshTokenInput) -> TokensOutput:
         payload = self._jwt_adapter.verify_refresh(input.refresh_token)
-        if payload is None:
-            raise InvalidRefreshTokenError()
-
         user = await self._user_repository.find_by_id(payload.sub)
         if user is None:
             raise InvalidRefreshTokenError()
-
         new_payload = TokenPayload(sub=user.id.value, email=user.email.value, role=user.role)
-
         return TokensOutput(
             access_token=self._jwt_adapter.sign(new_payload),
             refresh_token=self._jwt_adapter.sign_refresh(new_payload),

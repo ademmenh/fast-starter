@@ -13,7 +13,6 @@ from src.users.domain.errors import UserEmailAlreadyExistsError
 from src.auth.application.register import Register, RegisterInput
 from src.config.domain.interface import IConfig
 
-
 class AuthController:
     def __init__(
         self,

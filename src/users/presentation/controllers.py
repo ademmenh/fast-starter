@@ -1,6 +1,6 @@
 from src.users.domain.entity import UserRole
-from fastapi import Depends, HTTPException, Query
-from src.shared.presentation.auth import AccessTokenGuard, AuthUser, RoleGuard
+from fastapi import Depends, Query
+from src.shared.presentation.auth import AccessTokenGuard, RoleGuard, TokenPayload
 from src.shared.presentation.responses import PaginatedResponse, PaginationMeta, Response
 from src.users.application.delete_user import DeleteUser, DeleteUserInput
 from src.users.application.get_user import GetUser, GetUserInput
@@ -38,7 +38,8 @@ class UsersController:
 
     async def list_users(
         self,
-        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
+        _current_user: Annotated[TokenPayload, Depends(AccessTokenGuard())],
+        _role_user: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))],
         page: Annotated[int, Query(ge=1, description="Page number")] = 1,
         limit: Annotated[int, Query(ge=1, le=32, description="Items per page")] = 20,
         role: UserRole | None = Query(None, description="Filter by role"),
@@ -54,13 +55,14 @@ class UsersController:
                 data=[UserRDTO.from_entity(u) for u in users],
                 pagination=PaginationMeta(total=total, page=page, limit=limit),
             )
-        except Exception:
-            raise
+        except Exception as exc:
+            self.exception_handler(exc)
 
     async def get_user(
         self,
         user_id: str,
-        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
+        _current_user: Annotated[TokenPayload, Depends(AccessTokenGuard())],
+        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))]
     ) -> Response[UserRDTO]:
         try:
             user = await self.get_user_use_case.execute(GetUserInput(user_id=user_id))
@@ -76,7 +78,8 @@ class UsersController:
         self,
         user_id: str,
         dto: UpdateUserDto,
-        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
+        _current_user: Annotated[TokenPayload, Depends(AccessTokenGuard())],
+        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))]
     ) -> Response[UserRDTO]:
         try:
             user = await self.update_user_use_case.execute(
@@ -100,7 +103,8 @@ class UsersController:
     async def delete_user(
         self,
         user_id: str,
-        current_user: Annotated[AuthUser, Depends(RoleGuard(["admin"]))],
+        _current_user: Annotated[TokenPayload, Depends(AccessTokenGuard())],
+        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))]
     ) -> None:
         try:
             await self.delete_user_use_case.execute(DeleteUserInput(user_id=user_id))

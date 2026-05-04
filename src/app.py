@@ -1,6 +1,7 @@
+from jose import JWTError
+from src.shared.presentation.errors_handlers import jwt_error_handler
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-
 from fastapi import APIRouter, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +9,6 @@ from fastapi.openapi.utils import get_openapi
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
 from src.auth.infrastructure.jwt_adapter import JwtAdapter
 from src.auth.infrastructure.password_adapter import PasswordAdapter
 from src.auth.module import AuthModule
@@ -86,6 +86,7 @@ def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
     app.exception_handler(IntegrityError)(integrity_error_handler)
     app.exception_handler(RequestValidationError)(validation_error_handler)
     app.exception_handler(ValidationError)(validation_error_handler)
+    app.exception_handler(JWTError)(jwt_error_handler)
     app.exception_handler(Exception)(generic_error_handler)
 
     # ── Middleware ─────────────────────────────────────────────────────────────────

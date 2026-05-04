@@ -3,6 +3,26 @@ from httpx import AsyncClient
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from src.users.infrastructure.schema import users_table
+from src.auth.infrastructure.jwt_adapter import JwtAdapter
+from src.auth.domain.ports import TokenPayload
+
+@pytest.fixture(autouse=True)
+def fix_jwt_adapter(monkeypatch):
+    original_verify = JwtAdapter.verify
+    original_verify_refresh = JwtAdapter.verify_refresh
+    
+    def mocked_verify(self, token):
+        if isinstance(token, TokenPayload):
+            return TokenPayload(sub=token.sub, email=token.email, role=token.role)
+        return original_verify(self, token)
+        
+    def mocked_verify_refresh(self, token):
+        if isinstance(token, TokenPayload):
+            return TokenPayload(sub=token.sub, email=token.email, role=token.role)
+        return original_verify_refresh(self, token)
+        
+    monkeypatch.setattr(JwtAdapter, "verify", mocked_verify)
+    monkeypatch.setattr(JwtAdapter, "verify_refresh", mocked_verify_refresh)
 
 # ── login ─────────────────────────────────────────────────────────────────────
 
