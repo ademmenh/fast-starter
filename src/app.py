@@ -92,8 +92,8 @@ def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
     # ── Middleware ─────────────────────────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=config.cors_origins,
+        allow_credentials=config.cors_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )

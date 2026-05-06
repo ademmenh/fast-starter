@@ -1,32 +1,27 @@
-# Development image — includes dev dependencies and hot-reload
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:$PATH"
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc curl \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl gcc \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-COPY pyproject.toml .
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install runtime + dev dependencies
-RUN python3 - <<'EOF'
-import tomllib, subprocess, sys
-with open("pyproject.toml", "rb") as f:
-    data = tomllib.load(f)
-deps = (
-    data["project"]["dependencies"]
-    + data["project"]["optional-dependencies"]["dev"]
-)
-subprocess.check_call([sys.executable, "-m", "pip", "install"] + deps)
-EOF
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --frozen --no-dev
 
 COPY src ./src
+
 RUN mkdir -p logs
 
-# PORT is supplied at runtime via docker-compose.dev.yml environment.
-# Healthcheck is defined there so it can reference PORT.
+EXPOSE 8000
+
 CMD ["sh", "-c", "uvicorn src.main_dev:app --host 0.0.0.0 --port ${PORT:-8000} --reload"]

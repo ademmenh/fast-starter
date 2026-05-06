@@ -27,6 +27,8 @@ class Settings(BaseSettings):
 
     cookies_secure: bool = False
     cookies_same_site: str = "lax"
+    cors_origins: list[str] = ["*"]
+    cors_credentials: bool = True
 
     model_config = SettingsConfigDict(
         env_file=(".env", ".env.dev", "../.env", "../.env.dev"),
@@ -115,6 +117,14 @@ class ConfigAdapter(IConfig):
     @property
     def cookies_same_site(self) -> str:
         return self._settings.cookies_same_site
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return self._settings.cors_origins
+
+    @property
+    def cors_credentials(self) -> bool:
+        return self._settings.cors_credentials
 
     @property
     def database_url(self) -> str:

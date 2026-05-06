@@ -1,10 +1,15 @@
 from http import HTTPStatus
 
-def get_error_schema(status_code: int, message_type: str = "string"):
+def get_error_schema(
+    status_code: int, 
+    message_type: str = "string", 
+    error_example: str | None = None,
+    message_example: str | None = None
+):
     properties = {
-        "error": {"type": "string", "example": HTTPStatus(status_code).name},
+        "error": {"type": "string", "example": error_example or HTTPStatus(status_code).name},
         "statusCode": {"type": "integer", "example": status_code},
-        "message": {"type": message_type},
+        "message": {"type": message_type, "example": message_example},
     }
     if message_type == "array":
         properties["message"] = {
@@ -42,7 +47,7 @@ def custom_openapi(openapi_schema: dict):
         }
     })
 
-    error_codes = [400, 401, 403, 404, 422, 500]
+    error_codes = [400, 401, 403, 404, 409, 422, 500]
     for path in openapi_schema["paths"].values():
         for method in path.values():
             responses = method.get("responses", {})
@@ -54,7 +59,22 @@ def custom_openapi(openapi_schema: dict):
                     msg_type = None
                 else:
                     msg_type = "string"
-                schema = get_error_schema(code, msg_type)
+                
+                # Check if there is a custom description to use as error examples
+                error_example = None
+                message_example = None
+                if str_code in responses:
+                    response_obj = responses[str_code]
+                    desc = response_obj.get("description", "")
+                    
+                    if ":" in desc:
+                        parts = [s.strip() for s in desc.split(":", 1)]
+                        error_example = parts[0]
+                        message_example = parts[1]
+                    elif desc and desc != HTTPStatus(code).phrase:
+                        error_example = desc
+
+                schema = get_error_schema(code, msg_type, error_example, message_example)
                 
                 if str_code not in responses:
                     responses[str_code] = {
@@ -62,10 +82,10 @@ def custom_openapi(openapi_schema: dict):
                         "content": {"application/json": {"schema": schema}}
                     }
                 else:
+                    # Update content but KEEP the original description if it exists
                     responses[str_code]["content"] = {
                         "application/json": {"schema": schema}
                     }
             method["responses"] = responses
 
     return openapi_schema
-

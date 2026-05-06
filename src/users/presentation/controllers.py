@@ -1,7 +1,11 @@
 from src.users.domain.entity import UserRole
 from fastapi import Depends, Query
 from src.shared.presentation.auth import AccessTokenGuard, RoleGuard, TokenPayload
-from src.shared.presentation.responses import PaginatedResponse, PaginationMeta, Response
+from src.shared.presentation.responses import (
+    PaginatedResponse,
+    PaginationMeta,
+    Response,
+)
 from src.users.application.delete_user import DeleteUser, DeleteUserInput
 from src.users.application.get_user import GetUser, GetUserInput
 from src.users.application.list_users import ListUsers, ListUsersInput
@@ -32,9 +36,24 @@ class UsersController:
 
     def _register_routes(self) -> None:
         self.router.get("/users", response_model=PaginatedResponse[UserRDTO])(self.list_users)
-        self.router.get("/users/{user_id}", response_model=Response[UserRDTO])(self.get_user)
-        self.router.put("/users/{user_id}", response_model=Response[UserRDTO])(self.update_user)
-        self.router.delete("/users/{user_id}", status_code=204)(self.delete_user)
+        self.router.get(
+            "/users/{user_id}",
+            response_model=Response[UserRDTO],
+            responses={"404": {"description": "USER_NOT_FOUND: User with id not found"}},
+        )(self.get_user)
+        self.router.put(
+            "/users/{user_id}",
+            response_model=Response[UserRDTO],
+            responses={
+                "404": {"description": "USER_NOT_FOUND: User with id not found"},
+                "409": {"description": "USER_EMAIL_ALREADY_EXISTS: User with email already exists"},
+            },
+        )(self.update_user)
+        self.router.delete(
+            "/users/{user_id}",
+            status_code=204,
+            responses={"404": {"description": "USER_NOT_FOUND: User with id not found"}},
+        )(self.delete_user)
 
     async def list_users(
         self,

@@ -32,9 +32,21 @@ class AuthController:
         self._register_routes()
 
     def _register_routes(self) -> None:
-        self.router.post("/auth/login", response_model=AuthApiResponse[AuthUserRDTO])(self.login)
-        self.router.post("/auth/register", response_model=AuthApiResponse[AuthUserRDTO], status_code=201)(self.register)
-        self.router.post("/auth/refresh", response_model=ApiResponse[AuthTokensRDTO])(self.refresh)
+        self.router.post(
+            "/auth/login",
+            response_model=AuthApiResponse[AuthUserRDTO],
+            responses={"401": {"description": "INVALID_CREDENTIALS: Invalid email or password"}},
+        )(self.login)
+        self.router.post(
+            "/auth/register",
+            response_model=AuthApiResponse[AuthUserRDTO],
+            status_code=201,
+            responses={"409": {"description": "USER_EMAIL_ALREADY_EXISTS: User with email already exists"}},
+        )(self.register)
+        self.router.post(
+            "/auth/refresh",
+            response_model=ApiResponse[AuthTokensRDTO],
+        )(self.refresh)
 
     def _set_auth_cookies(self, response: FastAPIResponse, access_token: str, refresh_token: str) -> None:
         response.set_cookie(

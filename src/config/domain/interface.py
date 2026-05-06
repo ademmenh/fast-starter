@@ -99,6 +99,16 @@ class IConfig(ABC):
 
     @property
     @abstractmethod
+    def cors_origins(self) -> list[str]:
+        pass
+
+    @property
+    @abstractmethod
+    def cors_credentials(self) -> bool:
+        pass
+
+    @property
+    @abstractmethod
     def database_url(self) -> str:
         pass
 
