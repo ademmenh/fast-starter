@@ -7,9 +7,9 @@ from fastapi import APIRouter
 from sqlalchemy.ext.asyncio import AsyncEngine
 from src.auth.infrastructure.jwt_adapter import JwtAdapter
 from src.auth.infrastructure.password_adapter import PasswordAdapter
+from src.config.domain.interface import IConfig
 from src.shared.infrastructure.id_generator import IDGenerator
 from src.users.infrastructure.repository import UserRepository
-from src.config.domain.interface import IConfig
 
 
 class AuthModule:

@@ -1,8 +1,16 @@
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy import update
+from sqlalchemy import text, update
 from sqlalchemy.ext.asyncio import AsyncEngine
 from src.users.infrastructure.schema import users_table
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clear_users_table(db_engine: AsyncEngine):
+    """Clear users table before each test."""
+    async with db_engine.begin() as conn:
+        await conn.execute(text("DELETE FROM users"))
 
 
 @pytest.mark.asyncio
@@ -47,20 +55,20 @@ async def test_authenticated_user_can_read_own_profile(client: AsyncClient, db_e
         "/api/v1/auth/register",
         json={"name": "Frank", "email": email, "password": password},
     )
-    
+
     # Login as client (to get ID)
     login_init = await client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": password},
     )
     user_id = login_init.json()["data"]["id"]
-    
+
     # Elevate to admin
     async with db_engine.begin() as conn:
         await conn.execute(
             update(users_table).where(users_table.c.id == user_id).values(role="admin")
         )
-    
+
     # Login again to get admin token
     login = await client.post(
         "/api/v1/auth/login",

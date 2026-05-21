@@ -1,11 +1,12 @@
-from jose import JWTError
 from fastapi import Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from http import HTTPStatus
+from jose import JWTError
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.exceptions import RequestValidationError
+
 
 async def http_exception_handler(_request: Request, exc: StarletteHTTPException) -> JSONResponse:
     return JSONResponse(
@@ -17,6 +18,7 @@ async def http_exception_handler(_request: Request, exc: StarletteHTTPException)
         },
     )
 
+
 async def jwt_error_handler(_request: Request, exc: JWTError) -> JSONResponse:
     return JSONResponse(
         status_code=401,
@@ -26,6 +28,7 @@ async def jwt_error_handler(_request: Request, exc: JWTError) -> JSONResponse:
             "message": None,
         },
     )
+
 
 async def integrity_error_handler(_request: Request, exc: IntegrityError) -> JSONResponse:
     return JSONResponse(
@@ -37,7 +40,10 @@ async def integrity_error_handler(_request: Request, exc: IntegrityError) -> JSO
         },
     )
 
-async def validation_error_handler(_request: Request, exc: RequestValidationError | ValidationError) -> JSONResponse:
+
+async def validation_error_handler(
+    _request: Request, exc: RequestValidationError | ValidationError
+) -> JSONResponse:
     return JSONResponse(
         status_code=422,
         content={
@@ -46,6 +52,7 @@ async def validation_error_handler(_request: Request, exc: RequestValidationErro
             "message": exc.errors(),
         },
     )
+
 
 async def generic_error_handler(_request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(

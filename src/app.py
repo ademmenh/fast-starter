@@ -1,14 +1,12 @@
-from jose import JWTError
-from src.shared.presentation.errors_handlers import jwt_error_handler
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from jose import JWTError
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from src.auth.infrastructure.jwt_adapter import JwtAdapter
 from src.auth.infrastructure.password_adapter import PasswordAdapter
 from src.auth.module import AuthModule
@@ -20,10 +18,12 @@ from src.shared.presentation.errors_handlers import (
     generic_error_handler,
     http_exception_handler,
     integrity_error_handler,
+    jwt_error_handler,
     validation_error_handler,
 )
 from src.shared.presentation.open_api import custom_openapi
 from src.users.module import UsersModule
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
 def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
@@ -58,8 +58,8 @@ def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
     api_prefix = f"/api/v{config.api_version}"
 
     app = FastAPI(
-        title="Restaurant API",
-        description="Restaurant management system API",
+        title="Fast Starter API",
+        description="FastAPI starter template",
         version=config.api_version,
         lifespan=lifespan,
         docs_url=f"{api_prefix}/docs" if show_docs else None,
@@ -72,9 +72,9 @@ def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
     # ── Custom OpenAPI ────────────────────────────────────────────────────────────
     def openapi() -> dict:
         schema = get_openapi(
-            title="Restaurant API",
+            title="Fast Starter API",
             version=config.api_version,
-            description="Restaurant management system API",
+            description="FastAPI starter template",
             routes=app.routes,
         )
         return custom_openapi(schema)

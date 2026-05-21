@@ -1,28 +1,38 @@
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy import update
+from sqlalchemy import text, update
 from sqlalchemy.ext.asyncio import AsyncEngine
-from src.users.infrastructure.schema import users_table
-from src.auth.infrastructure.jwt_adapter import JwtAdapter
 from src.auth.domain.ports import TokenPayload
+from src.auth.infrastructure.jwt_adapter import JwtAdapter
+from src.users.infrastructure.schema import users_table
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clear_users_table(db_engine: AsyncEngine):
+    """Clear users table before each test."""
+    async with db_engine.begin() as conn:
+        await conn.execute(text("DELETE FROM users"))
+
 
 @pytest.fixture(autouse=True)
 def fix_jwt_adapter(monkeypatch):
     original_verify = JwtAdapter.verify
     original_verify_refresh = JwtAdapter.verify_refresh
-    
+
     def mocked_verify(self, token):
         if isinstance(token, TokenPayload):
             return TokenPayload(sub=token.sub, email=token.email, role=token.role)
         return original_verify(self, token)
-        
+
     def mocked_verify_refresh(self, token):
         if isinstance(token, TokenPayload):
             return TokenPayload(sub=token.sub, email=token.email, role=token.role)
         return original_verify_refresh(self, token)
-        
+
     monkeypatch.setattr(JwtAdapter, "verify", mocked_verify)
     monkeypatch.setattr(JwtAdapter, "verify_refresh", mocked_verify_refresh)
+
 
 # ── login ─────────────────────────────────────────────────────────────────────
 
@@ -105,20 +115,20 @@ async def test_register_access_token_is_usable(client: AsyncClient, db_engine: A
         json={"name": "Eve Auth", "email": email, "password": password},
     )
     user_id = reg.json()["data"]["id"]
-    
+
     # Elevate to admin in DB
     async with db_engine.begin() as conn:
         await conn.execute(
             update(users_table).where(users_table.c.id == user_id).values(role="admin")
         )
-    
+
     # Login again to get a token with the 'admin' role in the payload
     login_resp = await client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": password},
     )
     token = login_resp.json()["tokens"]["accessToken"]
-    
+
     me = await client.get(
         f"/api/v1/users/{user_id}",
         headers={"Authorization": f"Bearer {token}"},
@@ -158,7 +168,7 @@ async def test_refresh_new_access_token_is_usable(client: AsyncClient, db_engine
         json={"name": "Grace Auth", "email": email, "password": password},
     )
     user_id = reg.json()["data"]["id"]
-    
+
     # Elevate to admin
     async with db_engine.begin() as conn:
         await conn.execute(

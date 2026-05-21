@@ -1,7 +1,6 @@
 from .application.delete_user import DeleteUser
 from .application.get_user import GetUser
 from .application.list_users import ListUsers
-from .application.delete_user import DeleteUser
 from .application.update_user import UpdateUser
 from .infrastructure.repository import UserRepository
 from .presentation.controllers import UsersController
@@ -9,6 +8,7 @@ from .presentation.exception_handler import UsersExceptionHandler
 from fastapi import APIRouter
 from sqlalchemy.ext.asyncio import AsyncEngine
 from src.auth.infrastructure.password_adapter import PasswordAdapter
+
 
 class UsersModule:
     def __init__(

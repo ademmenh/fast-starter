@@ -1,5 +1,5 @@
-import uvicorn
 import logging
+import uvicorn
 from pathlib import Path
 from src.app import create_app
 from src.config.domain.interface import IConfig

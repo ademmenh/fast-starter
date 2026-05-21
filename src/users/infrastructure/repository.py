@@ -1,6 +1,5 @@
 from sqlalchemy import delete, func, insert, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncEngine
-
 from src.users.domain.entity import UserEntity
 from src.users.domain.ports import IUserRepository, ListUsersFilter
 from src.users.infrastructure.mapper import UserMapper
@@ -67,15 +66,14 @@ class UserRepository(IUserRepository):
             if result.rowcount == 0:
                 raise ValueError(f"User with id {user_id} not found")
 
-            result = await conn.execute(
-                select(users_table).where(users_table.c.id == user_id)
-            )
+            result = await conn.execute(select(users_table).where(users_table.c.id == user_id))
             row = result.one()
             return UserMapper.to_domain(row)
 
     async def delete(self, user_id: str) -> None:
         async with self._engine.begin() as conn:
             await conn.execute(delete(users_table).where(users_table.c.id == user_id))
+
 
 class InMemoryUserRepository(IUserRepository):
     def __init__(self):

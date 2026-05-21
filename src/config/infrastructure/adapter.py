@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     app_name: str = "waslini"
     api_version: str = "1"
     port: int = 8000
-    nginx_port: int = 443
 
     db_host: str = "localhost"
     db_port: int = 5432
@@ -57,10 +56,6 @@ class ConfigAdapter(IConfig):
     @property
     def port(self) -> int:
         return self._settings.port
-
-    @property
-    def nginx_port(self) -> int:
-        return self._settings.nginx_port
 
     @property
     def db_host(self) -> str:

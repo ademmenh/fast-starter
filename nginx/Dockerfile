@@ -1,5 +1,11 @@
-FROM nginx:alpine
+FROM nginx:1.29-alpine
 
-COPY templates /etc/nginx/templates/
+RUN apk add --no-cache bash openssl
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY templates/nginx.conf.template /etc/nginx/templates/default.conf.template
+
+COPY start.sh /docker-entrypoint.d/
+
+RUN chmod +x /docker-entrypoint.d/start.sh
+
+RUN mkdir -p /var/www/tiles && chown -R nginx:nginx /var/www/tiles

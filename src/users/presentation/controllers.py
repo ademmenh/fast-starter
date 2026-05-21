@@ -1,4 +1,3 @@
-from src.users.domain.entity import UserRole
 from fastapi import Depends, Query
 from src.shared.presentation.auth import AccessTokenGuard, RoleGuard, TokenPayload
 from src.shared.presentation.responses import (
@@ -10,11 +9,13 @@ from src.users.application.delete_user import DeleteUser, DeleteUserInput
 from src.users.application.get_user import GetUser, GetUserInput
 from src.users.application.list_users import ListUsers, ListUsersInput
 from src.users.application.update_user import UpdateUser, UpdateUserInput
+from src.users.domain.entity import UserRole
 from src.users.domain.errors import UserEmailAlreadyExistsError, UserNotFoundError
 from src.users.presentation.dtos import UpdateUserDto
 from src.users.presentation.exception_handler import UsersExceptionHandler
 from src.users.presentation.rdtos import UserRDTO
 from typing import Annotated
+
 
 class UsersController:
     def __init__(
@@ -81,7 +82,7 @@ class UsersController:
         self,
         user_id: str,
         _current_user: Annotated[TokenPayload, Depends(AccessTokenGuard())],
-        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))]
+        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))],
     ) -> Response[UserRDTO]:
         try:
             user = await self.get_user_use_case.execute(GetUserInput(user_id=user_id))
@@ -98,7 +99,7 @@ class UsersController:
         user_id: str,
         dto: UpdateUserDto,
         _current_user: Annotated[TokenPayload, Depends(AccessTokenGuard())],
-        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))]
+        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))],
     ) -> Response[UserRDTO]:
         try:
             user = await self.update_user_use_case.execute(
@@ -123,7 +124,7 @@ class UsersController:
         self,
         user_id: str,
         _current_user: Annotated[TokenPayload, Depends(AccessTokenGuard())],
-        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))]
+        _role: Annotated[TokenPayload, Depends(RoleGuard(["admin"]))],
     ) -> None:
         try:
             await self.delete_user_use_case.execute(DeleteUserInput(user_id=user_id))

@@ -5,8 +5,7 @@ HOST     = 0.0.0.0
 PORT     = 8000
 WORKERS  = 4
 
-# Find uv command - use which to locate it, fall back to known path
-UV_CMD = $(shell which uv 2>/dev/null || echo /home/gon/.local/bin/uv)
+UV_CMD = uv
 UV_RUN = $(UV_CMD) run
 
 PYTEST  = $(UV_RUN) pytest
@@ -28,7 +27,7 @@ RESET = \033[0m
 
 # ── Help ───────────────────────────────────────────────────────────────────────
 help:
-	@echo -e "$(CYAN)Restaurant API — available commands$(RESET)"
+	@echo -e "$(CYAN)Fast Starter API — available commands$(RESET)"
 	@echo -e "  Local"
 	@echo -e "    $(CYAN)make setup$(RESET)              Create virtual environment"
 	@echo -e "    $(CYAN)make deps$(RESET)               Install all dependencies (runtime + dev)"

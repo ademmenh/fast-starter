@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from src.auth.domain.errors import InvalidCredentialsError, InvalidRefreshTokenError
 from src.users.domain.errors import UserEmailAlreadyExistsError
 
+
 class AuthExceptionHandler:
     def __call__(self, exc: Exception) -> None:
         match exc:
@@ -11,10 +12,7 @@ class AuthExceptionHandler:
                     detail="Invalid Credentials",
                 )
             case InvalidRefreshTokenError():
-                raise HTTPException(
-                    status_code=401,
-                    detail=None
-                )
+                raise HTTPException(status_code=401, detail=None)
             case UserEmailAlreadyExistsError():
                 raise HTTPException(
                     status_code=409,

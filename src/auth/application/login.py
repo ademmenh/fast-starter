@@ -1,7 +1,7 @@
-from src.users.domain.entity import UserEntity
 from dataclasses import dataclass
 from src.auth.domain.errors import InvalidCredentialsError
 from src.auth.domain.ports import IJwtAdapter, IPasswordAdapter, TokenPayload
+from src.users.domain.entity import UserEntity
 from src.users.domain.ports import IUserRepository
 
 
@@ -38,7 +38,6 @@ class Login:
         user = await self._user_repository.find_by_email(input.email)
         if user is None:
             raise InvalidCredentialsError()
-        
 
         is_valid = await self._password_adapter.compare(input.password, user.password_hash)
         if not is_valid:

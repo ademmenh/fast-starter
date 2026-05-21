@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyCookie
-from src.auth.infrastructure.jwt_adapter import JwtAdapter
 from src.auth.domain.ports import TokenPayload
+from src.auth.infrastructure.jwt_adapter import JwtAdapter
 
 access_token_cookie = APIKeyCookie(name="access_token", auto_error=False)
 refresh_token_cookie = APIKeyCookie(name="refresh_token", auto_error=False)

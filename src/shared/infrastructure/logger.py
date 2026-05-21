@@ -5,7 +5,6 @@ import os
 import shutil
 from datetime import UTC, datetime
 from logging.handlers import TimedRotatingFileHandler
-from pathlib import Path
 
 __all__ = ["JsonFormatter", "GZipTimedRotatingFileHandler", "Logger"]
 

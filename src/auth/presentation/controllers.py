@@ -1,17 +1,17 @@
-from src.shared.presentation.responses import ApiResponse
-from src.auth.presentation.rdtos import AuthTokensRDTO
-from fastapi import APIRouter, Depends, Response as FastAPIResponse
+from fastapi import APIRouter, Depends
+from fastapi import Response as FastAPIResponse
 from src.auth.application.login import Login, LoginInput
 from src.auth.application.refresh import RefreshToken, RefreshTokenInput
+from src.auth.application.register import Register, RegisterInput
 from src.auth.domain.errors import InvalidCredentialsError, InvalidRefreshTokenError
 from src.auth.presentation.dtos import LoginDto, RegisterDto
 from src.auth.presentation.exception_handler import AuthExceptionHandler
-from src.auth.presentation.rdtos import AuthUserRDTO
-from src.shared.presentation.auth import RefreshTokenGuard
-from src.shared.presentation.responses import AuthApiResponse, TokensData
-from src.users.domain.errors import UserEmailAlreadyExistsError
-from src.auth.application.register import Register, RegisterInput
+from src.auth.presentation.rdtos import AuthTokensRDTO, AuthUserRDTO
 from src.config.domain.interface import IConfig
+from src.shared.presentation.auth import RefreshTokenGuard
+from src.shared.presentation.responses import ApiResponse, AuthApiResponse, TokensData
+from src.users.domain.errors import UserEmailAlreadyExistsError
+
 
 class AuthController:
     def __init__(
@@ -41,14 +41,18 @@ class AuthController:
             "/auth/register",
             response_model=AuthApiResponse[AuthUserRDTO],
             status_code=201,
-            responses={"409": {"description": "USER_EMAIL_ALREADY_EXISTS: User with email already exists"}},
+            responses={
+                "409": {"description": "USER_EMAIL_ALREADY_EXISTS: User with email already exists"}
+            },
         )(self.register)
         self.router.post(
             "/auth/refresh",
             response_model=ApiResponse[AuthTokensRDTO],
         )(self.refresh)
 
-    def _set_auth_cookies(self, response: FastAPIResponse, access_token: str, refresh_token: str) -> None:
+    def _set_auth_cookies(
+        self, response: FastAPIResponse, access_token: str, refresh_token: str
+    ) -> None:
         response.set_cookie(
             key="access_token",
             value=access_token,
@@ -70,8 +74,12 @@ class AuthController:
         response: FastAPIResponse,
     ) -> AuthApiResponse[AuthUserRDTO]:
         try:
-            result = await self.login_use_case.execute(LoginInput(email=dto.email, password=dto.password))
-            self._set_auth_cookies(response, result.tokens.access_token, result.tokens.refresh_token)
+            result = await self.login_use_case.execute(
+                LoginInput(email=dto.email, password=dto.password)
+            )
+            self._set_auth_cookies(
+                response, result.tokens.access_token, result.tokens.refresh_token
+            )
             return AuthApiResponse(
                 message="Login successful",
                 status_code=200,
@@ -103,7 +111,9 @@ class AuthController:
                     phone=dto.phone,
                 )
             )
-            self._set_auth_cookies(response, result.tokens.access_token, result.tokens.refresh_token)
+            self._set_auth_cookies(
+                response, result.tokens.access_token, result.tokens.refresh_token
+            )
             return AuthApiResponse(
                 message="Registration successful",
                 status_code=201,
@@ -111,7 +121,7 @@ class AuthController:
                     id=result.user.id.value,
                     name=result.user.name,
                     email=result.user.email.value,
-                    role=result.user.role
+                    role=result.user.role,
                 ),
                 tokens=TokensData(
                     access_token=result.tokens.access_token,
@@ -127,7 +137,9 @@ class AuthController:
         refresh_token: str = Depends(RefreshTokenGuard()),
     ) -> ApiResponse[AuthTokensRDTO]:
         try:
-            result = await self.refresh_use_case.execute(RefreshTokenInput(refresh_token=refresh_token))
+            result = await self.refresh_use_case.execute(
+                RefreshTokenInput(refresh_token=refresh_token)
+            )
             self._set_auth_cookies(response, result.access_token, result.refresh_token)
             return ApiResponse(
                 message="Token refreshed",

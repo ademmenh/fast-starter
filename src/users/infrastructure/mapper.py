@@ -1,5 +1,4 @@
 from sqlalchemy import Row
-
 from src.shared.domain.email import Email
 from src.shared.domain.id import Id
 from src.shared.domain.phone import Phone

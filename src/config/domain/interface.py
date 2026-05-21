@@ -24,11 +24,6 @@ class IConfig(ABC):
 
     @property
     @abstractmethod
-    def nginx_port(self) -> int:
-        pass
-
-    @property
-    @abstractmethod
     def db_host(self) -> str:
         pass
 

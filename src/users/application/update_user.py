@@ -7,6 +7,7 @@ from src.users.domain.errors import UserEmailAlreadyExistsError, UserNotFoundErr
 from src.users.domain.ports import IUserRepository
 from typing import Any
 
+
 @dataclass
 class UpdateUserInput:
     user_id: str

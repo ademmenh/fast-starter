@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+
 class CamelModel(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
@@ -37,6 +38,7 @@ class AuthApiResponse[T](CamelModel):
     status_code: int = 200
     data: T
     tokens: TokensData
+
 
 class ApiResponse[T](CamelModel):
     message: str = "Successful response"

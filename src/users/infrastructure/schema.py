@@ -1,6 +1,5 @@
 from sqlalchemy import Column, DateTime, String, Table, func
 from sqlalchemy.dialects.postgresql import UUID
-
 from src.shared.infrastructure.metadata import metadata
 
 users_table = Table(
