@@ -10,10 +10,16 @@ class TokensOutput:
     access_token: str
     refresh_token: str
 
+@dataclass
+class LoginUserOutput:
+    id: str
+    name: str
+    email: str
+    role: str
 
 @dataclass
 class LoginOutput:
-    user: UserEntity
+    user: LoginUserOutput
     tokens: TokensOutput
 
 
@@ -34,6 +40,15 @@ class Login:
         self._password_adapter = password_adapter
         self._jwt_adapter = jwt_adapter
 
+    @staticmethod
+    def _user_to_output(user: UserEntity) -> LoginUserOutput:
+        return LoginUserOutput(
+            id=user.id.value,
+            name=user.name,
+            email=user.email.value,
+            role=user.role,
+        )
+
     async def execute(self, input: LoginInput) -> LoginOutput:
         user = await self._user_repository.find_by_email(input.email)
         if user is None:
@@ -46,7 +61,7 @@ class Login:
         payload = TokenPayload(sub=user.id.value, email=user.email.value, role=user.role)
 
         return LoginOutput(
-            user=user,
+            user=self._user_to_output(user),
             tokens=TokensOutput(
                 access_token=self._jwt_adapter.sign(payload),
                 refresh_token=self._jwt_adapter.sign_refresh(payload),

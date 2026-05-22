@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from src.auth.application.login import LoginOutput, TokensOutput
+from src.auth.application.login import LoginOutput, LoginUserOutput, TokensOutput
 from src.auth.domain.ports import IJwtAdapter, IPasswordAdapter, TokenPayload
 from src.shared.domain.email import Email
 from src.shared.domain.phone import Phone
@@ -16,6 +16,12 @@ class RegisterInput:
     password: str
     phone: str | None = None
 
+@dataclass
+class RegisterOutput:
+    id: str
+    name: str
+    email: str
+    role: str
 
 class Register:
     def __init__(
@@ -53,7 +59,12 @@ class Register:
         )
 
         return LoginOutput(
-            user=saved_user,
+            user=LoginUserOutput(
+                id=saved_user.id.value,
+                name=saved_user.name,
+                email=saved_user.email.value,
+                role=saved_user.role,
+            ),
             tokens=TokensOutput(
                 access_token=self._jwt_adapter.sign(payload),
                 refresh_token=self._jwt_adapter.sign_refresh(payload),

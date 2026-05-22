@@ -1,12 +1,12 @@
+from src.auth.application.register import RegisterOutput
 from fastapi import APIRouter, Depends
 from fastapi import Response as FastAPIResponse
-from src.auth.application.login import Login, LoginInput
+from src.auth.application.login import Login, LoginInput, LoginUserOutput, TokensOutput
 from src.auth.application.refresh import RefreshToken, RefreshTokenInput
 from src.auth.application.register import Register, RegisterInput
 from src.auth.domain.errors import InvalidCredentialsError, InvalidRefreshTokenError
 from src.auth.presentation.dtos import LoginDto, RegisterDto
 from src.auth.presentation.exception_handler import AuthExceptionHandler
-from src.auth.presentation.rdtos import AuthTokensRDTO, AuthUserRDTO
 from src.config.domain.interface import IConfig
 from src.shared.presentation.auth import RefreshTokenGuard
 from src.shared.presentation.responses import ApiResponse, AuthApiResponse, TokensData
@@ -34,12 +34,12 @@ class AuthController:
     def _register_routes(self) -> None:
         self.router.post(
             "/auth/login",
-            response_model=AuthApiResponse[AuthUserRDTO],
+            response_model=AuthApiResponse[LoginUserOutput],
             responses={"401": {"description": "INVALID_CREDENTIALS: Invalid email or password"}},
         )(self.login)
         self.router.post(
             "/auth/register",
-            response_model=AuthApiResponse[AuthUserRDTO],
+            response_model=AuthApiResponse[LoginUserOutput],
             status_code=201,
             responses={
                 "409": {"description": "USER_EMAIL_ALREADY_EXISTS: User with email already exists"}
@@ -47,7 +47,7 @@ class AuthController:
         )(self.register)
         self.router.post(
             "/auth/refresh",
-            response_model=ApiResponse[AuthTokensRDTO],
+            response_model=ApiResponse[TokensOutput],
         )(self.refresh)
 
     def _set_auth_cookies(
@@ -72,7 +72,7 @@ class AuthController:
         self,
         dto: LoginDto,
         response: FastAPIResponse,
-    ) -> AuthApiResponse[AuthUserRDTO]:
+    ) -> AuthApiResponse[LoginUserOutput]:
         try:
             result = await self.login_use_case.execute(
                 LoginInput(email=dto.email, password=dto.password)
@@ -83,12 +83,7 @@ class AuthController:
             return AuthApiResponse(
                 message="Login successful",
                 status_code=200,
-                data=AuthUserRDTO(
-                    id=result.user.id.value,
-                    name=result.user.name,
-                    email=result.user.email.value,
-                    role=result.user.role,
-                ),
+                data=result.user,
                 tokens=TokensData(
                     access_token=result.tokens.access_token,
                     refresh_token=result.tokens.refresh_token,
@@ -101,7 +96,7 @@ class AuthController:
         self,
         dto: RegisterDto,
         response: FastAPIResponse,
-    ) -> AuthApiResponse[AuthUserRDTO]:
+    ) -> AuthApiResponse[RegisterOutput]:
         try:
             result = await self.register_use_case.execute(
                 RegisterInput(
@@ -117,12 +112,7 @@ class AuthController:
             return AuthApiResponse(
                 message="Registration successful",
                 status_code=201,
-                data=AuthUserRDTO(
-                    id=result.user.id.value,
-                    name=result.user.name,
-                    email=result.user.email.value,
-                    role=result.user.role,
-                ),
+                data=result.user,
                 tokens=TokensData(
                     access_token=result.tokens.access_token,
                     refresh_token=result.tokens.refresh_token,
@@ -135,7 +125,7 @@ class AuthController:
         self,
         response: FastAPIResponse,
         refresh_token: str = Depends(RefreshTokenGuard()),
-    ) -> ApiResponse[AuthTokensRDTO]:
+    ) -> ApiResponse[TokensOutput]:
         try:
             result = await self.refresh_use_case.execute(
                 RefreshTokenInput(refresh_token=refresh_token)
@@ -144,10 +134,7 @@ class AuthController:
             return ApiResponse(
                 message="Token refreshed",
                 status_code=200,
-                data=AuthTokensRDTO(
-                    access_token=result.access_token,
-                    refresh_token=result.refresh_token,
-                ),
+                data=result,
             )
         except InvalidRefreshTokenError as exc:
             self.exception_handler(exc)

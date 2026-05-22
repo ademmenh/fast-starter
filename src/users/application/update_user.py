@@ -1,11 +1,23 @@
 from dataclasses import dataclass, replace
+from datetime import datetime
 from src.auth.domain.ports import IPasswordAdapter
 from src.shared.domain.email import Email
 from src.shared.domain.phone import Phone
-from src.users.domain.entity import UserEntity, UserRole
+from src.users.domain.entity import UserRole
 from src.users.domain.errors import UserEmailAlreadyExistsError, UserNotFoundError
 from src.users.domain.ports import IUserRepository
 from typing import Any
+
+
+@dataclass
+class UpdateUserOutput:
+    id: str
+    name: str
+    email: str
+    phone: str | None
+    role: str
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass
@@ -27,7 +39,7 @@ class UpdateUser:
         self._user_repository = user_repository
         self._password_adapter = password_adapter
 
-    async def execute(self, input: UpdateUserInput) -> UserEntity:
+    async def execute(self, input: UpdateUserInput) -> UpdateUserOutput:
         user = await self._user_repository.find_by_id(input.user_id)
         if user is None:
             raise UserNotFoundError(input.user_id)
@@ -59,4 +71,13 @@ class UpdateUser:
         if updates:
             user = replace(user, **updates)
 
-        return await self._user_repository.update(user)
+        user = await self._user_repository.update(user)
+        return UpdateUserOutput(
+            id=user.id.value,
+            name=user.name,
+            email=user.email.value,
+            phone=user.phone.value if user.phone else None,
+            role=user.role,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        )
