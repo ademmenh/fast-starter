@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+for f in access.log error.log; do
+    if [ -L "/var/log/nginx/$f" ]; then
+        rm -f "/var/log/nginx/$f"
+    fi
+done
+
 mkdir -p /etc/nginx/ssl
 
 if [ ! -f /etc/nginx/ssl/nginx.crt ] || [ ! -f /etc/nginx/ssl/nginx.key ]; then

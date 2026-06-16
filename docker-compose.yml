@@ -63,6 +63,7 @@ services:
       retries: 3
 
   nginx:
+    container_name: fast-starter-nginx
     build:
       context: ./nginx
     restart: unless-stopped

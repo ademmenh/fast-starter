@@ -78,6 +78,7 @@ services:
     nginx:
         build:
             context: ./nginx
+        container_name: fast-starter-nginx-dev
         image: nginx:alpine
         restart: unless-stopped
         environment:
