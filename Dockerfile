@@ -16,6 +16,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY src ./src
+COPY alembic.ini ./
+COPY alembic ./alembic
 
 FROM python:3.12-slim
 

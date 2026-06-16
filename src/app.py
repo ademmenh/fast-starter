@@ -52,7 +52,6 @@ def create_app(config: IConfig, show_docs: bool = False) -> FastAPI:
     # ── Application ───────────────────────────────────────────────────────────────
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-        await db_adapter.create_tables()
         yield
 
     api_prefix = f"/api/v{config.api_version}"

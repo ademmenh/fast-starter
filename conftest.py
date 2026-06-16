@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from src.shared.infrastructure.metadata import metadata
+from src.config.infrastructure.database_adapter import metadata
 from src.users.infrastructure.schema import users_table  # Ensure tables are registered
 from src.app import create_app
 from src.config.infrastructure.adapter import ConfigAdapter, Settings

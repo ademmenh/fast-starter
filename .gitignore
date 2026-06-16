@@ -45,3 +45,6 @@ htmlcov/
 # ─── System ───────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+.ruff_cache
+.pytest_cache

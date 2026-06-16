@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     cors_credentials: bool = True
 
     model_config = SettingsConfigDict(
-        env_file=(".env", ".env.dev", "../.env", "../.env.dev"),
+        env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
         populate_by_name=True,
@@ -38,8 +38,11 @@ class Settings(BaseSettings):
 
 
 class ConfigAdapter(IConfig):
-    def __init__(self):
-        self._settings = Settings()
+    def __init__(self, env_file: str | None = None):
+        kwargs = {}
+        if env_file:
+            kwargs["_env_file"] = env_file
+        self._settings = Settings(**kwargs)
 
     @property
     def env(self) -> str:

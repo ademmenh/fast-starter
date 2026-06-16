@@ -1,32 +1,35 @@
 name: Unit Tests
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-  pull_request:
-    branches:
-      - main
-      - dev
+    push:
+        branches:
+            - main
+            - master
+            - dev
+
+    pull_request:
+        branches:
+            - main
+            - master
+            - dev
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+    test:
+        runs-on: ubuntu-latest
 
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install uv
-      uses: astral-sh/setup-uv@v3
-      with:
-        enable-cache: true
+        steps:
+            - uses: actions/checkout@v4
 
-    - name: Set up Python
-      run: uv python install 3.12
+            - name: Install uv
+              uses: astral-sh/setup-uv@v3
+              with:
+                  enable-cache: true
 
-    - name: Install dependencies
-      run: uv sync --all-extras --frozen
+            - name: Set up Python
+              run: uv python install 3.12
 
-    - name: Run unit tests
-      run: uv run pytest $(find src -name "*-unit.py")
+            - name: Install dependencies
+              run: uv sync --all-extras --frozen
+
+            - name: Run unit tests
+              run: uv run pytest $(find src -name "*-unit.py")

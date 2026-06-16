@@ -6,7 +6,7 @@ from src.config.domain.interface import IConfig
 from src.config.infrastructure.adapter import ConfigAdapter
 from src.shared.infrastructure.logger import GZipTimedRotatingFileHandler, JsonFormatter
 
-config: IConfig = ConfigAdapter()
+config: IConfig = ConfigAdapter(env_file=".env.dev")
 
 # Logging (Console + File for development)
 LOGS_DIR = Path(__file__).resolve().parents[1] / config.logs_dirname

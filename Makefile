@@ -1,12 +1,6 @@
-PYTHON   = python3
-APP_DIR  = .
-APP      = src.main:app
-HOST     = 0.0.0.0
-PORT     = 8000
-WORKERS  = 4
-
-UV_CMD = uv
-UV_RUN = $(UV_CMD) run
+UV_CMD  = uv
+UV_RUN  = $(UV_CMD) run
+COMPOSE = docker compose -f docker-compose.dev.yml
 
 PYTEST  = $(UV_RUN) pytest
 UVICORN = $(UV_RUN) uvicorn
@@ -40,7 +34,9 @@ help:
 	@echo -e "    $(CYAN)make start:dev$(RESET)          Start dev stack (hot-reload, detached)"
 	@echo -e "    $(CYAN)make stop:dev$(RESET)           Stop  dev stack"
 	@echo -e "    $(CYAN)make attach$(RESET)             Tail live app logs"
-	@echo -e "    $(CYAN)make migrate$(RESET)            Run Alembic migrations in dev container"
+	@echo -e "    $(CYAN)make migrate$(RESET)            Run Alembic migrations (upgrade head)"
+	@echo -e "    $(CYAN)make migrate:create$(RESET)       Create a new migration file"
+	@echo -e "    $(CYAN)make migrate:downgrade$(RESET)    Downgrade the last migration"
 	@echo -e "    $(CYAN)make shell$(RESET)              Open shell in running dev container"
 	@echo -e "    $(CYAN)make ps$(RESET)                 Show running containers"
 	@echo -e "  Tests"
@@ -52,28 +48,35 @@ help:
 
 # ── Docker ─────────────────────────────────────────────────────────────────────
 build\:dev:
-	docker compose -f docker-compose.dev.yml build
+	$(COMPOSE) build
 
 build\:prod:
 	docker compose build
 
 start\:dev:
-	docker compose -f docker-compose.dev.yml up -d
+	$(COMPOSE) up -d
 
 stop\:dev:
-	docker compose -f docker-compose.dev.yml down
+	$(COMPOSE) down
 
 attach:
-	docker compose -f docker-compose.dev.yml logs -f app
+	$(COMPOSE) logs -f app
 
 migrate:
-	docker compose -f docker-compose.dev.yml exec app alembic upgrade head
+	$(COMPOSE) run --rm migrate
+
+migrate\:create:
+	@read -p "Migration message: " msg; \
+	$(COMPOSE) run --rm migrate alembic revision --autogenerate -m "$$msg"
+
+migrate\:downgrade:
+	$(COMPOSE) run --rm migrate alembic downgrade -1
 
 shell:
-	docker compose -f docker-compose.dev.yml exec app /bin/bash
+	$(COMPOSE) exec app /bin/bash
 
 ps:
-	docker compose -f docker-compose.dev.yml ps
+	$(COMPOSE) ps
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
 test:

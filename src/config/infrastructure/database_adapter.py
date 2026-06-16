@@ -1,6 +1,8 @@
+from sqlalchemy import MetaData, text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from src.config.domain.interface import IConfig
-from src.shared.infrastructure.metadata import metadata
+
+metadata = MetaData()
 
 
 class DatabaseAdapter:
@@ -15,6 +17,7 @@ class DatabaseAdapter:
     def engine(self) -> AsyncEngine:
         return self._engine
 
-    async def create_tables(self) -> None:
+    async def clean_tables(self) -> None:
         async with self._engine.begin() as conn:
-            await conn.run_sync(metadata.create_all)
+            for table in reversed(metadata.sorted_tables):
+                await conn.execute(text(f'TRUNCATE TABLE "{table.name}" CASCADE'))

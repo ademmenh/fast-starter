@@ -20,6 +20,22 @@ services:
       retries: 10
       start_period: 10s
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - net
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: ${DB_HOST}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: alembic upgrade head
+
   app:
     build:
       context: .
@@ -28,6 +44,7 @@ services:
     env_file:
       - .env
     environment:
+      PYTHONPATH: /app
       PORT:           ${PORT:-8000}
       WORKERS_NUMBER: ${WORKERS_NUMBER:-4}
       DB_HOST:        ${DB_HOST}
@@ -36,8 +53,8 @@ services:
     networks:
       - net
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request, os; urllib.request.urlopen('http://localhost:' + os.environ.get('PORT','8000') + '/api/v' + os.environ.get('API_VERSION','1') + '/health')"]
       interval: 30s
