@@ -1,24 +1,17 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
-# // examples
 class LoginDto(BaseModel):
-    """Example for login"""
-
-    email: EmailStr = "user@gmail.com"
-    password: str = "password123"
+    email: EmailStr = Field(..., examples=["user@gmail.com"])
+    password: str = Field(..., examples=["password123"])
 
 
 class RegisterDto(BaseModel):
-    """Example for register"""
-
-    name: str = "John Doe"
-    email: EmailStr = "user@gmail.com"
-    password: str = "password"
-    phone: str | None = "123456789"
+    name: str = Field(..., examples=["John Doe"])
+    email: EmailStr = Field(..., examples=["user@gmail.com"])
+    password: str = Field(..., examples=["password"])
+    phone: str | None = Field(None, examples=["123456789"])
 
 
 class RefreshDto(BaseModel):
-    """Example for refresh"""
-
-    refresh_token: str = "refresh_token"
+    refresh_token: str = Field(..., examples=["refresh_token"])

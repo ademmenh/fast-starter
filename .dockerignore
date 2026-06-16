@@ -1,0 +1,57 @@
+# Git
+.git/
+.gitignore
+
+# Environment / secrets
+.env
+.env.dev
+.env.test
+.env.example
+
+# Python cache / artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# Test / lint cache
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# Logs
+logs/
+
+# Docker compose (not needed inside images)
+docker-compose.yml
+docker-compose.dev.yml
+
+# CI
+.github/
+
+# IDE
+.idea/
+.vscode/
+*.sublime-workspace
+
+# System
+.DS_Store
+Thumbs.db
+
+# Docs / misc
+README.md
+LICENSE
+Makefile
+ddd_py.md
+nginx/
+
