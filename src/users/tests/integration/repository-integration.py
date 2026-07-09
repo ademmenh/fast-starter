@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 import uuid
 from dataclasses import replace
 from sqlalchemy import text
@@ -10,7 +11,7 @@ from src.users.domain.ports import ListUsersFilter
 from src.users.infrastructure.repository import UserRepository
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def clear_users_table(db_engine: AsyncEngine):
     """Clear users table before each test."""
     async with db_engine.begin() as conn:

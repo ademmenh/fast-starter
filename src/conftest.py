@@ -1,6 +1,5 @@
-import asyncio
-
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -13,18 +12,11 @@ from src.app import create_app
 
 
 @pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
 def config() -> ConfigAdapter:
     return ConfigAdapter(env_file=".env.test")
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def _setup_test_database(config: ConfigAdapter):
     db_name = config.db_name
     maintenance_url = config.async_database_url.rsplit("/", 1)[0] + "/postgres"
@@ -48,8 +40,8 @@ async def _setup_test_database(config: ConfigAdapter):
     await engine.dispose()
 
 
-@pytest.fixture
-async def db_engine(config: ConfigAdapter) -> AsyncGenerator[AsyncEngine, None]:
+@pytest_asyncio.fixture
+async def db_engine(_setup_test_database, config: ConfigAdapter) -> AsyncGenerator[AsyncEngine, None]:
     db = DatabaseAdapter(config)
     engine = db.engine
     async with engine.begin() as conn:
@@ -59,8 +51,8 @@ async def db_engine(config: ConfigAdapter) -> AsyncGenerator[AsyncEngine, None]:
     await engine.dispose()
 
 
-@pytest.fixture
-async def client(config: ConfigAdapter, monkeypatch: pytest.MonkeyPatch) -> AsyncGenerator[AsyncClient, None]:
+@pytest_asyncio.fixture
+async def client(_setup_test_database, config: ConfigAdapter, monkeypatch: pytest.MonkeyPatch) -> AsyncGenerator[AsyncClient, None]:
     db = DatabaseAdapter(config)
     async with db.engine.begin() as conn:
         await conn.run_sync(metadata.create_all)
